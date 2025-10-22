@@ -1,16 +1,19 @@
-# 🖼️ Image to WebP Converter (Python + Tkinter)
+# 🖼️ Image Converter (Python + Tkinter)
 
-Aplikasi GUI sederhana berbasis **Tkinter** untuk mengonversi gambar dari berbagai format (JPG, JPEG, PNG, SVG) ke **WebP**.  
-Mendukung multi-file selection, pengaturan kualitas, serta dukungan SVG menggunakan `cairosvg`.
+Aplikasi GUI sederhana berbasis **Tkinter** untuk mengonversi gambar antar format (JPG, JPEG, PNG, SVG, WebP).
+Mendukung konversi **ke** WebP dan **dari** WebP.
+
+Mendukung multi-file selection, pengaturan kualitas (untuk WebP/JPEG), serta dukungan SVG menggunakan `cairosvg`.
 
 ---
 
 ## ✨ Fitur Utama
 - ✅ Antarmuka GUI sederhana & interaktif
-- ✅ Mendukung format gambar: `.jpg`, `.jpeg`, `.png`, `.svg`
+- ✅ Mendukung format input: `.jpg`, `.jpeg`, `.png`, `.svg`, `.webp`
+- ✅ Pilihan format output: **WebP**, **PNG**, **JPEG**
 - ✅ Konversi banyak gambar sekaligus (multi-select)
-- ✅ Pengaturan kualitas output (1–100)
-- ✅ Dukungan konversi **SVG → WebP** (via `cairosvg`)
+- ✅ Pengaturan kualitas output (1–100) untuk WebP dan JPEG
+- ✅ Dukungan konversi **SVG → WebP/PNG/JPEG** (via `cairosvg`)
 - ✅ Progress bar dan status proses real-time
 - ✅ Pilihan folder output
 
