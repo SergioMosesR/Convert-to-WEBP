@@ -7,8 +7,8 @@ from email.mime.image import MIMEImage
 import os
 
 # KONFIGURASI GMAIL GRATIS
-EMAIL = 'sergiomoses.r@gmail.com'  # Email Gmail Anda
-PASSWORD = 'tyoa wket ndcs ihse'  # App Password (bukan password biasa)
+EMAIL = ''  # Email Gmail Anda
+PASSWORD = ''  # App Password (bukan password biasa)
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
 
