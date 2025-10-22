@@ -1,0 +1,134 @@
+import smtplib
+import csv
+import time
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+import os
+
+# KONFIGURASI SMTP (Ganti sesuai setup Anda)
+# Untuk Zoho: SMTP_SERVER = 'smtp.zoho.com', EMAIL = 'hr@inixindo.co.id', PASSWORD = 'app_password_zoho'
+SMTP_SERVER = 'smtp.gmail.com'  # Atau smtp.zoho.com / smtp.inixindo.co.id
+SMTP_PORT = 587
+EMAIL = 'hr@inixindo@gmail.com'  # Ganti ke email profesional
+PASSWORD = 'your_app_password'  # App Password
+
+BATCH_SIZE = 20  # Kecil untuk lolos spam
+DELAY = 10  # Detik antar email
+
+def send_pengumuman(to_email, to_name, nomor_pendaftaran, subject, message_html, message_text, logo_path=None):
+    """Kirim pengumuman lolos seleksi"""
+    try:
+        msg = MIMEMultipart('alternative')  # Alternative untuk HTML/plain
+        msg['From'] = f'PT Inixindo Bandung <{EMAIL}>'
+        msg['To'] = to_email
+        msg['Subject'] = f"{subject} - {nomor_pendaftaran}"  # Personalisasi dengan nomor ref
+        msg['Reply-To'] = EMAIL
+        msg['List-Unsubscribe'] = f'<mailto:{EMAIL}?subject=Unsubscribe>'
+        msg['X-Mailer'] = 'PT Inixindo Notification System'  # Tambah kredibilitas
+
+        # Personalisasi
+        personalized_html = message_html.format(nama=to_name, nomor_pendaftaran=nomor_pendaftaran)
+        personalized_text = message_text.format(nama=to_name, nomor_pendaftaran=nomor_pendaftaran)
+
+        # Attach plain text & HTML
+        msg.attach(MIMEText(personalized_text, 'plain'))
+        msg.attach(MIMEText(personalized_html, 'html'))
+
+        # Attach logo inline
+        if logo_path and os.path.exists(logo_path):
+            with open(logo_path, 'rb') as f:
+                img = MIMEImage(f.read())
+                img.add_header('Content-ID', 'logo1')
+                msg.attach(img)
+
+        # Kirim
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL, PASSWORD)
+        server.sendmail(EMAIL, to_email, msg.as_string())
+        server.quit()
+
+        print(f"✓ Terkirim ke {to_name} ({to_email}) - Ref: {nomor_pendaftaran}")
+        return True
+
+    except Exception as e:
+        print(f"✗ Error {to_email}: {str(e)}")
+        with open('log_gagal.txt', 'a', encoding='utf-8') as log:
+            log.write(f"{to_email}: {str(e)}\n")
+        return False
+
+def blast_pengumuman(csv_file, subject, message_html, message_text, logo_path=None):
+    """Blast ke daftar lolos dari CSV"""
+    recipients = []
+    with open(csv_file, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            recipients.append({
+                'nama': row['nama'],
+                'email': row['email'],
+                'nomor_pendaftaran': row['nomor_pendaftaran']
+            })
+
+    print(f"🚀 Mulai pengumuman ke {len(recipients)} peserta lolos...")
+
+    success = 0
+    for i in range(0, len(recipients), BATCH_SIZE):
+        batch = recipients[i:i + BATCH_SIZE]
+        for rec in batch:
+            if send_pengumuman(rec['email'], rec['nama'], rec['nomor_pendaftaran'], 
+                               subject, message_html, message_text, logo_path):
+                success += 1
+            time.sleep(DELAY)
+        
+        if i + BATCH_SIZE < len(recipients):
+            print(f"Batch {i//BATCH_SIZE + 1} selesai. Istirahat 15 menit...")
+            time.sleep(900)  # 15 menit
+
+    print(f"🎉 SELESAI! {success}/{len(recipients)} pengumuman berhasil terkirim")
+
+# CONTOH PENGGUNAAN
+if __name__ == "__main__":
+    CSV_FILE = 'peserta_lolos.csv'  # Format: nama,email,nomor_pendaftaran
+    SUBJECT = "Selamat, Anda Terpilih dalam Seleksi Ujian PT Inixindo Bandung"
+    
+    MESSAGE_HTML = """
+    <html>
+    <body style="font-family: Arial, sans-serif;">
+        <img src="cid:logo1" alt="Logo PT Inixindo" style="width:200px;">
+        <h2>Selamat {nama}!</h2>
+        <p>Dengan Nomor Pendaftaran: <b>{nomor_pendaftaran}</b></p>
+        <p>Anda telah lolos tahap seleksi ujian awal untuk posisi di PT Inixindo Bandung.</p>
+        <p><b>Selanjutnya:</b> Wawancara pada 15 November 2025 pukul 09:00 WIB.</p>
+        <p>Konfirmasi kehadiran via: <a href="https://portal.inixindo.co.id/konfirmasi/{nomor_pendaftaran}">Portal Resmi</a></p>
+        <p>Hubungi HR: 022-XXXXXXX atau hr@inixindo.co.id untuk info lebih lanjut.</p>
+        <hr>
+        <small>
+            PT Inixindo Bandung<br>
+            Jl. Contoh No. 123, Bandung 40123<br>
+            Telp: 022-XXXXXXX | Email: info@inixindo.co.id<br>
+            <a href="mailto:{EMAIL}?subject=Unsubscribe">Tidak ingin email selanjutnya?</a>
+        </small>
+    </body>
+    </html>
+    """
+    
+    MESSAGE_TEXT = """
+    Selamat {nama}!
+
+    Nomor Pendaftaran: {nomor_pendaftaran}
+    Anda lolos seleksi ujian PT Inixindo Bandung.
+    Wawancara: 15/11/2025 pukul 09:00 WIB.
+    Konfirmasi: https://portal.inixindo.co.id/konfirmasi/{nomor_pendaftaran}
+
+    Hubungi HR: 022-XXXXXXX
+    PT Inixindo Bandung, Jl. Contoh No. 123, Bandung.
+    Unsubscribe: Balas email ini dengan "STOP".
+    """
+    
+    # Siapkan logo (file PNG/JPG)
+    LOGO_PATH = 'logo_inixindo.png'
+    
+    blast_pengumuman(CSV_FILE, SUBJECT, MESSAGE_HTML, MESSAGE_TEXT, LOGO_PATH)
+
+    
